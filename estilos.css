@@ -1,6 +1,6 @@
 body {
   background-color: #ffd829;
-  width: 100%;
+  width: auto;
   height: auto;
   margin: 0;
   padding: 0;
@@ -44,15 +44,22 @@ nav img {
   text-decoration: none;
 }
 
-section {
+.section-principal {
+  background-color: #fff5ca;
   display: flex;
   justify-content: space-around;
+  margin: 0px 0px 0px 0px;
+  padding: 50px 25px 50px 25px;
+}
+
+.section-explicacion {
+  width: auto;
   margin: 50px 0px 50px 0px;
   padding: 15px 25px 15px 25px;
 }
 
 .recuadros {
-  background-color: white;
+  background-color: #ffd829;
   display: flex;
   width: 563px;
   height: 500px;
