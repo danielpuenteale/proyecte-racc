@@ -91,3 +91,29 @@ footer {
   color: white;
   font-size: 13px;
 }
+
+.imagenes_nosotros {
+  display: flex;
+  justify-content: center;
+  margin-left: 550px;
+  gap: 50px;
+  width: 800px;
+  height: 800px;
+} 
+
+.imaganes_explicacion {
+  display: flex;
+  justify-content: center;
+  margin-left: 550px;
+  gap: 50px;
+  width: 800px;
+  height: 800px ;
+}
+
+.titulo_imagenes {
+  display: flex;
+  justify-content: center;
+  margin-top: 50px;
+  font-size: 50px;
+  font-weight: bold;
+} 
