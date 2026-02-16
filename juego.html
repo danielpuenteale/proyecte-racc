@@ -1,11 +1,207 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Joc</title>
+<meta charset="UTF-8">
+<title>Vista desde dentro del coche</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+  canvas {
+    display: block;
+    background: #87CEEB; /* cielo */
+  }
+  #controls {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    padding: 15px 20px;
+    border-radius: 10px;
+    text-align: left;
+    color: white;
+  }
+</style>
 </head>
 <body>
-       
+<canvas id="gameCanvas"></canvas>
+
+<div id="controls">
+  <p>↑ Mover arriba</p>
+  <p>↓ Mover abajo</p>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Coche que se mueve sobre la carretera
+const car = {
+  width: 100,
+  height: 50,
+  lane: 0, // 0 = superior, 1 = inferior
+  x: canvas.width/2 - 50, // centrado horizontalmente
+  y: 0,
+  targetY: 0,
+  speed: 10,
+  image: new Image()
+};
+car.image.src = "images/imagen_coche.png"; // coche horizontal
+
+// Carretera horizontal
+const roadHeight = 200;
+const roadY = canvas.height/2 - roadHeight/2;
+const lanes = [
+  roadY + 10,
+  roadY + roadHeight/2 + 10
+];
+car.y = lanes[0];
+car.targetY = lanes[0];
+
+// Líneas de carril
+const lineDash = [];
+const lineCount = 20;
+const lineWidth = 20;
+const gap = 30;
+for(let i=0; i<lineCount; i++){
+  lineDash.push({x: i*(lineWidth+gap)});
+}
+
+// Árboles y montañas para el paisaje arriba de la carretera
+const trees = [];
+for(let i=0; i<15; i++){
+  trees.push({
+    x: Math.random()*canvas.width,
+    y: roadY - (50 + Math.random()*150),
+    height: 50 + Math.random()*50,
+    width: 20,
+    color: 'green'
+  });
+}
+
+const mountains = [
+  {x: 50, y: 0, width: 300, height: 150},
+  {x: 400, y: 0, width: 400, height: 200},
+  {x: 900, y: 0, width: 350, height: 180}
+];
+
+// Imagen del interior del coche
+const carInterior = new Image();
+carInterior.src = "images/interior_coche.png"; // vista desde dentro
+const interiorHeight = 200; // altura de la vista interior
+
+// Teclas
+window.addEventListener("keydown", (e)=>{
+  if(e.key === "ArrowUp"){
+    car.lane = 0;
+    car.targetY = lanes[0];
+  }
+  if(e.key === "ArrowDown"){
+    car.lane = 1;
+    car.targetY = lanes[1];
+  }
+});
+
+// Dibuja paisaje arriba de la carretera
+function drawLandscape(){
+  // Césped arriba y abajo de la carretera
+  ctx.fillStyle = "#228B22";
+  ctx.fillRect(0, 0, canvas.width, roadY); // césped arriba
+  ctx.fillRect(0, roadY + roadHeight, canvas.width, canvas.height - (roadY + roadHeight)); // césped abajo
+
+  // Montañas
+  ctx.fillStyle = "#8B7D7B";
+  for(let m of mountains){
+    ctx.beginPath();
+    ctx.moveTo(m.x, roadY);
+    ctx.lineTo(m.x + m.width/2, roadY - m.height);
+    ctx.lineTo(m.x + m.width, roadY);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Árboles
+  for(let t of trees){
+    ctx.fillStyle = 'brown';
+    ctx.fillRect(t.x, t.y + t.height*0.8, t.width, t.height*0.2); // tronco
+    ctx.fillStyle = t.color;
+    ctx.beginPath();
+    ctx.moveTo(t.x - t.width, t.y + t.height*0.8);
+    ctx.lineTo(t.x + t.width*2, t.y + t.height*0.8);
+    ctx.lineTo(t.x + t.width/2, t.y - t.height*0.2);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+// Dibuja carretera y líneas
+function drawRoad(){
+  ctx.fillStyle = "#555";
+  ctx.fillRect(0, roadY, canvas.width, roadHeight);
+
+  ctx.strokeStyle = "#FFF";
+  ctx.lineWidth = 5;
+  ctx.setLineDash([lineWidth, gap]);
+  ctx.beginPath();
+  for(let i=0; i<lineDash.length; i++){
+    ctx.moveTo(lineDash[i].x, canvas.height/2);
+    ctx.lineTo(lineDash[i].x + lineWidth, canvas.height/2);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// Actualiza líneas de la carretera
+function updateRoad(){
+  for(let i=0; i<lineDash.length; i++){
+    lineDash[i].x -= 10;
+    if(lineDash[i].x < -lineWidth) lineDash[i].x = canvas.width;
+  }
+}
+
+// Dibuja coche sobre la carretera
+function drawCar(){
+  ctx.drawImage(car.image, car.x, car.y, car.width, car.height);
+}
+
+// Actualiza coche suavemente
+function updateCar(){
+  if(car.y < car.targetY){
+    car.y += car.speed;
+    if(car.y > car.targetY) car.y = car.targetY;
+  }
+  if(car.y > car.targetY){
+    car.y -= car.speed;
+    if(car.y < car.targetY) car.y = car.targetY;
+  }
+}
+
+// Dibuja la vista interior del coche abajo
+function drawCarInterior(){
+  ctx.drawImage(carInterior, 0, canvas.height - interiorHeight, canvas.width, interiorHeight);
+}
+
+// Bucle principal
+function gameLoop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawLandscape();
+  updateRoad();
+  drawRoad();
+  updateCar();
+  drawCar();
+  if(carInterior.complete) drawCarInterior(); // dibuja cuando la imagen cargue
+  requestAnimationFrame(gameLoop);
+}
+
+// Esperamos a que la imagen del coche que se mueve cargue
+car.image.onload = ()=>{
+  gameLoop();
+};
+</script>
 </body>
 </html>
