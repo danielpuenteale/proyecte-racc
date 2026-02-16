@@ -81,6 +81,17 @@ nav img {
   text-decoration: none;
 }
 
+.recuadros a {
+  transition: all 0.3s ease;
+}
+
+.recuadros a:hover {
+  background-color: rgb(70, 69, 69);
+  color: #ffd829;
+  transform: scale(1.05);
+  border-radius: 15px;
+}
+
 footer {
   background-color: black;
   display: flex;
