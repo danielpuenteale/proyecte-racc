@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>Juego de Coche - Controles Corregidos</title>
+    <title>Juego de Coche - Flujo de Inicio</title>
     <style>
       body {
         margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif;
@@ -26,7 +26,7 @@
       }
 
       #velocimetroFijo {
-        position: absolute; top: 90px; right: 30px;
+        position: absolute; top: 20px; right: 30px;
         background: rgba(0, 0, 0, 0.7); color: #2ecc71;
         padding: 6px 12px; border-radius: 6px; 
         font-size: 18px; font-weight: bold; 
@@ -34,13 +34,11 @@
         min-width: 80px; text-align: center;
       }
 
-      /* CAJA DE CONTROLES (Corregida) */
       #controlesUI {
         position: absolute; top: 20px; left: 20px;
         background: rgba(0, 0, 0, 0.85); color: white;
         padding: 15px; border-radius: 8px; border-left: 5px solid #f1c40f;
-        z-index: 200; /* Prioridad máxima */
-        display: none; /* Se activa con la tecla C */
+        z-index: 200; display: none;
       }
       .tecla { color: #f1c40f; font-weight: bold; }
 
@@ -60,8 +58,9 @@
       #btnIniciarVerde:active { transform: translateY(2px); box-shadow: none; }
 
       #botonReiniciarImg {
-        width: 275px; height: auto; cursor: pointer;
+        width: 200px; height: auto; cursor: pointer;
         display: none; transition: transform 0.1s;
+        margin-bottom: 20px;
       }
       #botonReiniciarImg:hover { transform: scale(1.1); }
     </style>
@@ -74,15 +73,16 @@
         <div style="font-size: 14px; margin-bottom: 5px"><strong>🎮 CONTROLES</strong></div>
         <div style="font-size: 13px; line-height: 1.5">
           <span class="tecla">➡️</span> ACELERAR / <span class="tecla">⬅️</span> FRENAR<br />
-          <span class="tecla">⬆️/⬇️</span> CAMBIAR CARRIL<br />
-          <span class="tecla">C</span> CERRAR MENÚ
+          <span class="tecla">⬆️/⬇️</span> CARRIL / <span class="tecla">C</span> CERRAR
         </div>
       </div>
 
       <div id="startScreen">
         <h1 id="mensajeEstado" style="color: white; margin-bottom: 20px;">JUEGO DE COCHE</h1>
-        <button id="btnIniciarVerde">INICIAR</button>
+        
         <img src="images/boton_reiniciar.png" id="botonReiniciarImg" alt="Reiniciar">
+        
+        <button id="btnIniciarVerde">INICIAR</button>
       </div>
 
       <canvas id="gameCanvas"></canvas>
@@ -126,17 +126,13 @@
       const enemyImages = [];
       const sources = ["images/coche_de_cara1.png", "images/coche_de_cara2.png", "images/coche_de_cara3.png"];
       sources.forEach((src) => {
-        const img = new Image();
-        img.src = src;
+        const img = new Image(); img.src = src;
         enemyImages.push(img);
       });
 
-      // LÓGICA DE TECLAS (CORREGIDA PARA LA 'C')
       let keys = {};
       window.addEventListener("keydown", (e) => {
         keys[e.key] = true;
-        
-        // Al pulsar C, alternamos entre mostrar y ocultar el div
         if (e.key.toLowerCase() === 'c') {
           showControls = !showControls;
           divControles.style.display = showControls ? "block" : "none";
@@ -169,7 +165,8 @@
         });
       }
 
-      function iniciarPartida() {
+      // ACCIÓN DEL BOTÓN VERDE
+      btnIniciarVerde.addEventListener("click", () => {
         enemyCars = [];
         lastSpawnTime = 0;
         currentSpeed = minSpeed;
@@ -178,10 +175,21 @@
         invencibleHasta = performance.now() + 2000;
         gameStarted = true;
         startScreen.style.display = "none";
-      }
+      });
 
-      btnIniciarVerde.addEventListener("click", iniciarPartida);
-      btnResetImg.addEventListener("click", iniciarPartida);
+      // ACCIÓN DE LA IMAGEN DE RESET
+      btnResetImg.addEventListener("click", () => {
+        // Limpiamos el juego pero NO arrancamos
+        enemyCars = [];
+        currentSpeed = minSpeed;
+        car.y = lanes[0];
+        car.targetY = lanes[0];
+        
+        // Cambiamos la interfaz para volver al estado de "Inicio"
+        mensajeEstado.innerText = "JUEGO DE COCHE";
+        btnResetImg.style.display = "none"; // Ocultamos la imagen de reset
+        btnIniciarVerde.style.display = "block"; // Volvemos a mostrar el botón verde
+      });
 
       function update(timestamp) {
         if (!gameStarted) return;
@@ -218,8 +226,11 @@
               
               gameStarted = false;
               mensajeEstado.innerText = "¡HAS CHOCADO!";
+              
+              // Mostramos la imagen de reset y ocultamos el verde momentáneamente
               btnIniciarVerde.style.display = "none";
               btnResetImg.style.display = "block";
+              
               startScreen.style.display = "flex";
               return;
             }
@@ -248,6 +259,8 @@
       }
 
       function gameLoop(timestamp) {
+        update(timestamp);
+        draw(timestamp);
         if (gameStarted) {
           if (!lastSpawnTime) lastSpawnTime = timestamp;
           let spawnRate = 1300 - currentSpeed * 30;
@@ -256,8 +269,6 @@
             lastSpawnTime = timestamp;
           }
         }
-        update(timestamp);
-        draw(timestamp);
         requestAnimationFrame(gameLoop);
       }
       requestAnimationFrame(gameLoop);
