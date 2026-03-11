@@ -57,9 +57,23 @@
         text-align: center;
       }
 
+      /* NUEVO: Estilo para el aviso de la tecla C */
+      #avisoC {
+        position: absolute;
+        top: 10px;
+        left: 20px;
+        color: white;
+        font-size: 12px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 4px 8px;
+        border-radius: 4px;
+        z-index: 210;
+        pointer-events: none;
+      }
+
       #controlesUI {
         position: absolute;
-        top: 20px;
+        top: 40px; /* Bajado un poco para no solapar el aviso */
         left: 20px;
         background: rgba(0, 0, 0, 0.85);
         color: white;
@@ -97,14 +111,9 @@
         cursor: pointer;
         box-shadow: 0 4px 0 #27ae60;
       }
-      #btnIniciarVerde:active {
-        transform: translateY(2px);
-        box-shadow: none;
-      }
 
-      /* CORRECCIÓN: Tamaño del botón de reiniciar */
       #botonReiniciarImg {
-        width: 220px; /* Antes estaba en 00px */
+        width: 120px;
         height: auto;
         cursor: pointer;
         display: none;
@@ -118,6 +127,8 @@
   </head>
   <body>
     <div id="game-container">
+      <div id="avisoC">Pulsa <span class="tecla">C</span> para ver controles</div>
+      
       <div id="velocimetroFijo">0 km/h</div>
 
       <div id="controlesUI">
@@ -159,6 +170,7 @@
       const mensajeEstado = document.getElementById("mensajeEstado");
       const velocimetro = document.getElementById("velocimetroFijo");
       const divControles = document.getElementById("controlesUI");
+      const avisoC = document.getElementById("avisoC");
 
       const GAME_WIDTH = 1000;
       const GAME_HEIGHT = 600;
@@ -209,6 +221,8 @@
         if (e.key.toLowerCase() === "c") {
           showControls = !showControls;
           divControles.style.display = showControls ? "block" : "none";
+          // Ocultamos el aviso pequeño si los controles ya están abiertos
+          avisoC.style.opacity = showControls ? "0" : "1";
         }
       });
       window.addEventListener("keyup", (e) => (keys[e.key] = false));
@@ -258,15 +272,13 @@
         startScreen.style.display = "none";
       }
 
-      // El botón verde inicia el juego
       btnIniciarVerde.addEventListener("click", iniciarPartida);
 
-      // El botón de reset limpia y permite volver a empezar
       btnResetImg.addEventListener("click", () => {
         btnResetImg.style.display = "none";
         btnIniciarVerde.style.display = "block";
         mensajeEstado.innerText = "JUEGO DE COCHE";
-        iniciarPartida(); // Llama directamente a iniciar para que sea fluido
+        iniciarPartida();
       });
 
       function update(timestamp) {
@@ -305,11 +317,10 @@
               car.y + 30 < e.y + e.height - 30 &&
               car.y + PLAYER_HEIGHT - 30 > e.y + 30
             ) {
-              // COLISIÓN DETECTADA
               gameStarted = false;
               mensajeEstado.innerText = "¡HAS CHOCADO!";
               btnIniciarVerde.style.display = "none";
-              btnResetImg.style.display = "block"; // Ahora sí se verá (120px)
+              btnResetImg.style.display = "block";
               startScreen.style.display = "flex";
               return;
             }
@@ -320,8 +331,6 @@
 
       function draw(timestamp) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Cielo y Sol
         ctx.fillStyle = "#87CEEB";
         ctx.fillRect(0, 0, canvas.width, roadY);
         ctx.fillStyle = "#FFD700";
@@ -329,7 +338,6 @@
         ctx.arc(canvas.width - 60, 50, 30, 0, Math.PI * 2);
         ctx.fill();
 
-        // Nubes
         clouds.forEach((c) => {
           ctx.fillStyle = "white";
           ctx.beginPath();
@@ -337,14 +345,11 @@
           ctx.fill();
         });
 
-        // Carretera
         ctx.fillStyle = "#2c3e50";
         ctx.fillRect(0, roadY, canvas.width, roadHeight);
         ctx.fillStyle = "#ecf0f1";
         ctx.fillRect(0, roadY, canvas.width, 6);
         ctx.fillRect(0, roadY + roadHeight - 6, canvas.width, 6);
-        
-        // Línea discontinua
         ctx.strokeStyle = "#f1c40f";
         ctx.lineWidth = 6;
         ctx.setLineDash([60, 40]);
@@ -355,21 +360,16 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Dibujar jugador (con parpadeo si es invencible)
         ctx.save();
-        if (timestamp < invencibleHasta && Math.floor(timestamp / 100) % 2 === 0) {
+        if (timestamp < invencibleHasta && Math.floor(timestamp / 100) % 2 === 0)
           ctx.globalAlpha = 0.4;
-        }
-        if (car.loaded) {
+        if (car.loaded)
           ctx.drawImage(car.image, car.x, car.y, PLAYER_WIDTH, PLAYER_HEIGHT);
-        }
         ctx.restore();
 
-        // Dibujar enemigos
         enemyCars.forEach((e) => {
-          if (e.image.complete) {
+          if (e.image.complete)
             ctx.drawImage(e.image, e.x, e.y, e.width, e.height);
-          }
         });
       }
 
