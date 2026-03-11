@@ -102,8 +102,9 @@
         box-shadow: none;
       }
 
+      /* CORRECCIÓN: Tamaño del botón de reiniciar */
       #botonReiniciarImg {
-        width: 200px;
+        width: 220px; /* Antes estaba en 00px */
         height: auto;
         cursor: pointer;
         display: none;
@@ -117,11 +118,11 @@
   </head>
   <body>
     <div id="game-container">
-      <div id="velocimetroFijo">60 km/h</div>
+      <div id="velocimetroFijo">0 km/h</div>
 
       <div id="controlesUI">
         <div style="font-size: 14px; margin-bottom: 5px">
-          <strong> CONTROLES</strong>
+          <strong>CONTROLES</strong>
         </div>
         <div style="font-size: 13px; line-height: 1.5">
           <span class="tecla">➡️</span> ACELERAR /
@@ -246,8 +247,7 @@
         });
       }
 
-      // ACCIÓN DEL BOTÓN VERDE
-      btnIniciarVerde.addEventListener("click", () => {
+      function iniciarPartida() {
         enemyCars = [];
         lastSpawnTime = 0;
         currentSpeed = minSpeed;
@@ -256,20 +256,17 @@
         invencibleHasta = performance.now() + 2000;
         gameStarted = true;
         startScreen.style.display = "none";
-      });
+      }
 
-      // ACCIÓN DE LA IMAGEN DE RESET
+      // El botón verde inicia el juego
+      btnIniciarVerde.addEventListener("click", iniciarPartida);
+
+      // El botón de reset limpia y permite volver a empezar
       btnResetImg.addEventListener("click", () => {
-        // Limpiamos el juego pero NO arrancamos
-        enemyCars = [];
-        currentSpeed = minSpeed;
-        car.y = lanes[0];
-        car.targetY = lanes[0];
-
-        // Cambiamos la interfaz para volver al estado de "Inicio"
+        btnResetImg.style.display = "none";
+        btnIniciarVerde.style.display = "block";
         mensajeEstado.innerText = "JUEGO DE COCHE";
-        btnResetImg.style.display = "none"; // Ocultamos la imagen de reset
-        btnIniciarVerde.style.display = "block"; // Volvemos a mostrar el botón verde
+        iniciarPartida(); // Llama directamente a iniciar para que sea fluido
       });
 
       function update(timestamp) {
@@ -308,13 +305,11 @@
               car.y + 30 < e.y + e.height - 30 &&
               car.y + PLAYER_HEIGHT - 30 > e.y + 30
             ) {
+              // COLISIÓN DETECTADA
               gameStarted = false;
               mensajeEstado.innerText = "¡HAS CHOCADO!";
-
-              // Mostramos la imagen de reset y ocultamos el verde momentáneamente
               btnIniciarVerde.style.display = "none";
-              btnResetImg.style.display = "block";
-
+              btnResetImg.style.display = "block"; // Ahora sí se verá (120px)
               startScreen.style.display = "flex";
               return;
             }
@@ -325,23 +320,31 @@
 
       function draw(timestamp) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Cielo y Sol
         ctx.fillStyle = "#87CEEB";
         ctx.fillRect(0, 0, canvas.width, roadY);
         ctx.fillStyle = "#FFD700";
         ctx.beginPath();
         ctx.arc(canvas.width - 60, 50, 30, 0, Math.PI * 2);
         ctx.fill();
+
+        // Nubes
         clouds.forEach((c) => {
           ctx.fillStyle = "white";
           ctx.beginPath();
           ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
           ctx.fill();
         });
+
+        // Carretera
         ctx.fillStyle = "#2c3e50";
         ctx.fillRect(0, roadY, canvas.width, roadHeight);
         ctx.fillStyle = "#ecf0f1";
         ctx.fillRect(0, roadY, canvas.width, 6);
         ctx.fillRect(0, roadY + roadHeight - 6, canvas.width, 6);
+        
+        // Línea discontinua
         ctx.strokeStyle = "#f1c40f";
         ctx.lineWidth = 6;
         ctx.setLineDash([60, 40]);
@@ -352,19 +355,21 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
+        // Dibujar jugador (con parpadeo si es invencible)
         ctx.save();
-        if (
-          timestamp < invencibleHasta &&
-          Math.floor(timestamp / 100) % 2 === 0
-        )
+        if (timestamp < invencibleHasta && Math.floor(timestamp / 100) % 2 === 0) {
           ctx.globalAlpha = 0.4;
-        if (car.loaded)
+        }
+        if (car.loaded) {
           ctx.drawImage(car.image, car.x, car.y, PLAYER_WIDTH, PLAYER_HEIGHT);
+        }
         ctx.restore();
 
+        // Dibujar enemigos
         enemyCars.forEach((e) => {
-          if (e.image.complete)
+          if (e.image.complete) {
             ctx.drawImage(e.image, e.x, e.y, e.width, e.height);
+          }
         });
       }
 
